@@ -1,5 +1,6 @@
+var Mandrill = require('mandrill');
+Mandrill.initialize('AHaK4-FxJJB5CqTMAIddQw');
 // App variables
-var ALERT_RADIUS = 20;
 var debugMode = true;
 
 Parse.Cloud.define("Ping", function (request, response) {
@@ -55,14 +56,69 @@ Parse.Cloud.define("Ping", function (request, response) {
                 }
 
                 if (!isInAllowedLocation) {
-                    var sendAlerts =
+                    //var sendAlerts =
                         alertSubscribersForUser(pingUser);
-                    //Parse.Promise.when(sendAlerts).then(function (result) {
+                    //Parse.Promise.when(alertSubscribersForUser(pingUser)).then(function (result) {
                     ////alertSubscribersForUser(pingUser);
-                    //    response.success("false");
+                        //response.success("false");
                     //});
+                        Parse.Cloud.useMasterKey();
+                        pingUser.fetch({
+                            success: function (fetchedUser) {
+                                fetchedUser.save(null, {
+                                    success: function (res) {
+                                        res.set("outOfBounds", true);
+                                        res.save(null, {
+                                            success: function (res2) {
+                                                response.success("false");
+                                            },
+                                            error: function (model, error) {
+                                                //response.error(error);
+                                                response.error("Unable to complete AllowedLocations query");
+                                            }
+                                        });
+                                    },
+                                    error: function (res, error) {
+                                        // The save failed.  Error is an instance of Parse.Error.
+                                        response.error("Unable to complete AllowedLocations query");
+                                    }
+                                });
+                            },
+                            error: function (myObject, error) {
+                                // The object was not refreshed successfully.
+                                // error is a Parse.Error with an error code and description.
+                                response.error("Unable to complete AllowedLocations query");
+                            }
+                        });
                 } else {
-                    response.success("true");
+                    Parse.Cloud.useMasterKey();
+                    pingUser.fetch({
+                        success: function (fetchedUser) {
+                            fetchedUser.save(null, {
+                                success: function (res) {
+                                    res.set("outOfBounds", false);
+                                    res.save(null, {
+                                        success: function (res2) {
+                                            response.success("true");
+                                        },
+                                        error: function (model, error) {
+                                            //response.error(error);
+                                            response.error("Unable to complete AllowedLocations query");
+                                        }
+                                    });
+                                },
+                                error: function (res, error) {
+                                    // The save failed.  Error is an instance of Parse.Error.
+                                    response.error("Unable to complete AllowedLocations query");
+                                }
+                            });
+                        },
+                        error: function (myObject, error) {
+                            // The object was not refreshed successfully.
+                            // error is a Parse.Error with an error code and description.
+                            response.error("Unable to complete AllowedLocations query");
+                        }
+                    });
                 }
             },
             error: function (error) {
@@ -76,19 +132,35 @@ Parse.Cloud.define("Ping", function (request, response) {
 
 function alertSubscribersForUser(user) {
     var subscriberArray = user.get("alertSubscribers");
-    if (debugMode) {
-        console.log("Alerting subscribers");
-        console.log(subscriberArray);
-    }
+    //if (debugMode) {
+    //    console.log("Alerting subscribers");
+    //    console.log(subscriberArray);
+    //}
 
-    for (var i = 0; i < subscriberArray.length; i++) {
-        //var sendAlert =
-            sendSMSAlert(subscriberArray[i]);
-        //Parse.Promise.when(sendAlert).then(function (result) {
-        //    if (i == subscriberArray.length - 1) return 0;
-        //});
-    }
-    return;
+    //for (var i = 0; i < subscriberArray.length; i++) {
+    //    //var sendAlert =
+    //        sendSMSAlert(subscriberArray[i]);
+    //    //Parse.Promise.when(sendAlert).then(function (result) {
+    //    //    if (i == subscriberArray.length - 1) return 0;
+    //    //});
+    //}
+    //return;
+
+    Parse.Promise.as().then(function () {
+        var promises = [];
+
+        for (var i = 0; i < subscriberArray.length; i++) {
+            promises.push(sendSMSAlert(subscriberArray[i]));
+        }
+
+        return Parse.Promise.when(promises);
+    }).then(function (result) {
+        //response.success("false");
+        return result;
+    }, function (error) {
+        //response.error(error);
+        return error;
+    });
 }
 
 function sendSMSAlert(targetUser) {
@@ -97,8 +169,8 @@ function sendSMSAlert(targetUser) {
         //return; //remove when ready to test sms
     }
 
-    var Mandrill = require('mandrill');
-    Mandrill.initialize('AHaK4-FxJJB5CqTMAIddQw');
+    //var Mandrill = require('mandrill');
+    //Mandrill.initialize('AHaK4-FxJJB5CqTMAIddQw');
 
     //var number = getPhonenumberForUser(targetUser);
 
@@ -118,7 +190,8 @@ function sendSMSAlert(targetUser) {
                     from_name: "Cisco Vigil",
                     to: [
                     {
-                        email: debugMode ? "ch4ch4@gmail.com" : user.get("phonenumber") + "@txt.att.net",
+                        //email: "ch4ch4@gmail.com",
+                        email: user.get("phonenumber") + "@txt.att.net",
                         name: "Vigil User"
                     }
                     ]
@@ -166,4 +239,24 @@ function getPhonenumberForUser(userId) {
 
 Parse.Cloud.define("Panic", function (request, response) {
     alertSubscribersForUser(request.user);
+});
+
+Parse.Cloud.define("CheckIfUserOutOfBounds", function (request, response) {
+    var userId = request.params.userId;
+
+    Parse.Cloud.useMasterKey();
+    var user = new Parse.User;
+    user.id = userId;
+
+    user.fetch({
+        success: function (user) {
+            response.success(user.get("outOfBounds"));
+        },
+        error: function (object, error) {
+            // The object was not retrieved successfully.
+            // error is a Parse.Error with an error code and description.
+            if (debugMode) console.log("Error retrieving user's outOfBounds status");
+            response.error(error);
+        }
+    });
 });
