@@ -1,59 +1,70 @@
-<!doctype html>
-<head>
-  <meta charset="utf-8">
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <title>Flat Design Mini Portfolio</title>
+    <meta name="description" content="Flat Design Mini Portfolio">
+    <meta name="keywords" content="responsive, bootstrap, flat design, flat ui, portfolio">
+    <meta name="author" content="Dzyngiri">
+    <meta name="description" content="This is a responsive flat design mini portfolio for creative folks who want to showcase their work online.">
+    <!-- styles -->
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/bootstrap-responsive.css" rel="stylesheet">
+<!--     <link href="css/style.css" rel="stylesheet">
+ -->    <link href="font/css/fontello.css" rel="stylesheet">
+    <link href='http://fonts.googleapis.com/css?family=Droid+Sans:400,700' rel='stylesheet' type='text/css'>
+<!--     <link href="font/css/fontello.css" rel="stylesheet"> -->
+<script type="text/JavaScript">
+<!--
+function timedRefresh(timeoutPeriod) {
+  setTimeout("location.reload(true);",timeoutPeriod);
+}
+//   -->
+</script>
+    </head>
+    <body onload="JavaScript:timedRefresh(5000);">
+            <div class="navbar-inner" ></div>
 
-  <title>My Parse App</title>
-  <meta name="description" content="My Parse App">
-  <meta name="viewport" content="width=device-width">
-  <link rel="stylesheet" href="css/reset.css">
-  <link rel="stylesheet" href="css/styles.css">
-  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
-  <script type="text/javascript" src="http://www.parsecdn.com/js/parse-1.2.16.min.js"></script>
-</head>
-
-<body>
-  
-  <div id="main">
-    <h1>You're ready to use Parse!</h1>
-
-    <p>Read the documentation and start building your JavaScript app:</p>
-
-    <ul>
-      <li><a href="https://www.parse.com/docs/js_guide">Parse JavaScript Guide</a></li>
-      <li><a href="https://www.parse.com/docs/js">Parse JavaScript API Documentation</a></li>
-    </ul>
-
-    <div style="display:none" class="error">
-      Looks like there was a problem saving the test object. Make sure you've set your application ID and javascript key correctly in the call to <code>Parse.initialize</code> in this file.
-    </div>
-
-    <div style="display:none" class="success">
-      <p>We've also just created your first object using the following code:</p>
-      
-        <code>
-          var TestObject = Parse.Object.extend("TestObject");<br/>
-          var testObject = new TestObject();<br/>
-          testObject.save({foo: "bar"});
-        </code>
-		
-    </div>
-      <button onclick="testParse()">TestParse()</button>
-  </div>
-
-  <script type="text/javascript">
-	Parse.initialize("3cb2FjuxyxNdHfaDaYLuxJU7QFoq0S0JtRmiyJwF", "7SvIUqZ0caqgiPxDHtne0B4jitEe7oDcr8cvXjAz");
+      <div class="container row-fluid span12 pagination-centered">
+    <!--Profile container-->
     
-	Parse.User.logIn("harvey", "harvey", {
-	  success: function(user) {
-	      // Do stuff after successful login.
-	      console.log("successful login");
-	  },
-	  error: function(user, error) {
-		// The login failed. Check error to see why.
-	  }
-	});
-	
-	/*
+      <img src="" style=" horizontal-align:middle;" id="safeOrWarn"> 
+      
+        <h1>Cisco Vigil Status</h1>
+    <!--END: Profile container-->
+  </div>
+    <!-- Footer -->
+    <div class="footer">
+      <div class="container">
+        <!-- <p class="pull-left"><a href="http://dzyngiri.com">www.dzyngiri.com</a></p> -->
+        <p class="pull-right"><a href="#myModal" role="button" data-toggle="modal"></a></p>
+      </div>
+    </div>
+    <!-- Contact form in Modal -->
+    <!-- Modal -->
+    <div id="myModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3 id="myModalLabel"><i class="icon-mail"></i> Contact Me</h3>
+      </div>
+      <div class="modal-body">
+        <form>
+          <input type="text" placeholder="Yopur Name">
+          <input type="text" placeholder="Your Email">
+          <input type="text" placeholder="Website (Optional)">
+          <textarea rows="3" style="width:80%"></textarea>
+          <br/>
+          <button type="submit" class="btn btn-large"><i class="icon-paper-plane"></i> SUBMIT</button>
+        </form>
+      </div>
+    </div>
+    <!-- Scripts -->
+    <script type="text/javascript" src="http://www.parsecdn.com/js/parse-1.2.16.min.js"></script>
+    <script src="http://code.jquery.com/jquery.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+         <script type="text/javascript">
+    Parse.initialize("3cb2FjuxyxNdHfaDaYLuxJU7QFoq0S0JtRmiyJwF", "7SvIUqZ0caqgiPxDHtne0B4jitEe7oDcr8cvXjAz");
+    
     var TestObject = Parse.Object.extend("TestObject");
     var testObject = new TestObject();
       testObject.save({foo: "bar"}, {
@@ -64,18 +75,24 @@
         $(".error").show();
       }
     });
-	*/
-	function testParse(){
-		Parse.Cloud.run('Ping', {"latitude":"37.410248","longitude":"-121.962013","userId":"1ueALUyyK6"}, {
-		  success: function(result) {
-		      console.log("success");
-		  },
-		  error: function (error) {
-		      console.log("fail");
-		  }
-		});
-	}
   </script>
-</body>
+      <script src="js/hackit.js"></script>
 
+    </body>
+    </html>
+
+
+
+<html>
+<head>
+<script type="text/JavaScript">
+<!--
+function timedRefresh(timeoutPeriod) {
+  setTimeout("location.reload(true);",timeoutPeriod);
+}
+//   -->
+</script>
+</head>
+<body onload="JavaScript:timedRefresh(10000);">
+</body>
 </html>
