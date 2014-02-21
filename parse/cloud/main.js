@@ -41,20 +41,117 @@ Parse.Cloud.define("Ping", function (request, response) {
         allowedLocationQuery.find({
             success: function (results) {
                 // results is an array of Parse.Object.
-                var isInAllowedLocation = false;
+                var isInAllowedLocation;
+                var promises = [];
+
                 for (var i = 0; i < results.length; i++) {
                     //iterate through each allowed location and check bounds
-                    if (!isInAllowedLocation && results[i].get("location").kilometersTo(pingLocation) < results[i].get("radius")) {
-                        //the user is inside of allowed area
-                        isInAllowedLocation = true;
-                    }
+                    //if (!isInAllowedLocation && results[i].get("location").kilometersTo(pingLocation) < results[i].get("radius")) {
+                    //    //the user is inside of allowed area
+                    //    isInAllowedLocation = true;
+                    //}
                     if (debugMode) {
                         console.log("location:" + results[i].get("location"));
                         console.log("radius:" + results[i].get("radius"));
-                        console.log("isInAllowedLocation:" + isInAllowedLocation);
+                        //console.log("isInAllowedLocation:" + isInAllowedLocation);
                     }
+                    promises.push(results[i].get("location").kilometersTo(pingLocation) < results[i].get("radius"));
                 }
 
+                Parse.Promise.when(promises).then(function () {
+                    //this is the success
+                    // take a look at what was passed here:
+                    console.log(arguments);
+                    for (var i = 0; i < arguments.length; i++) {
+                        //console.log(arguments[i]);
+                        if (arguments[i]) {
+                            //do nothing
+                        } else {
+                            isInAllowedLocation = false;
+                            return false;
+                        }
+                    }
+                }, function () {
+                    // this is the error function
+                    console.log(arguments);
+                }).then(function (returnValue) {
+                    if (returnValue === false) {
+                        //this means that the user is out of bounds
+                        if (debugMode) console.log("updating outOfBounds to true");
+                        Parse.Cloud.useMasterKey();
+                        pingUser.fetch({
+                            success: function (fetchedUser) {
+                                Parse.Cloud.useMasterKey();
+                                fetchedUser.save(null, {
+                                    success: function (res) {
+                                        Parse.Cloud.useMasterKey();
+                                        res.set("outOfBounds", true);
+                                        res.save(null, {
+                                            success: function (res2) {
+                                                //response.success("false");
+                                                if (debugMode) console.log("outOfBounds updated to true");
+                                            },
+                                            error: function (model, error) {
+                                                //response.error(error);
+                                                response.error("Unable to complete AllowedLocations query");
+                                            }
+                                        }).then(function () {
+                                            alertSubscribersForUser(pingUser);
+                                        }).then(function () {
+                                            response.success();
+                                        });
+                                    },
+                                    error: function (res, error) {
+                                        // The save failed.  Error is an instance of Parse.Error.
+                                        response.error("Unable to complete AllowedLocations query");
+                                    }
+                                });
+                            },
+                            error: function (myObject, error) {
+                                // The object was not refreshed successfully.
+                                // error is a Parse.Error with an error code and description.
+                                response.error("Unable to complete AllowedLocations query");
+                            }
+                        });
+                    } else {
+                        //this means that the user is not out of bounds
+                        if (debugMode) console.log("updating outOfBounds to false");
+                        Parse.Cloud.useMasterKey();
+                        pingUser.fetch({
+                            success: function (fetchedUser) {
+                                Parse.Cloud.useMasterKey();
+                                fetchedUser.save(null, {
+                                    success: function (res) {
+                                        Parse.Cloud.useMasterKey();
+                                        res.set("outOfBounds", false);
+                                        res.save(null, {
+                                            success: function (res2) {
+                                                //response.success("true");
+                                                if (debugMode) console.log("outOfBounds updated to false");
+                                            },
+                                            error: function (model, error) {
+                                                //response.error(error);
+                                                response.error("Unable to complete AllowedLocations query");
+                                            }
+                                        }).then(function () {
+                                            response.success();
+                                        });
+                                    },
+                                    error: function (res, error) {
+                                        // The save failed.  Error is an instance of Parse.Error.
+                                        response.error("Unable to complete AllowedLocations query");
+                                    }
+                                });
+                            },
+                            error: function (myObject, error) {
+                                // The object was not refreshed successfully.
+                                // error is a Parse.Error with an error code and description.
+                                response.error("Unable to complete AllowedLocations query");
+                            }
+                        });
+                    }
+                });
+                /*
                 if (!isInAllowedLocation) {
                     //var sendAlerts =
                         alertSubscribersForUser(pingUser);
@@ -70,7 +167,7 @@ Parse.Cloud.define("Ping", function (request, response) {
                                         res.set("outOfBounds", true);
                                         res.save(null, {
                                             success: function (res2) {
-                                                response.success("false");
+                                                //response.success("false");
                                             },
                                             error: function (model, error) {
                                                 //response.error(error);
@@ -99,7 +196,7 @@ Parse.Cloud.define("Ping", function (request, response) {
                                     res.set("outOfBounds", false);
                                     res.save(null, {
                                         success: function (res2) {
-                                            response.success("true");
+                                            //response.success("true");
                                         },
                                         error: function (model, error) {
                                             //response.error(error);
@@ -120,6 +217,7 @@ Parse.Cloud.define("Ping", function (request, response) {
                         }
                     });
                 }
+                */
             },
             error: function (error) {
                 response.error("Unable to complete AllowedLocations query");
@@ -190,8 +288,8 @@ function sendSMSAlert(targetUser) {
                     from_name: "Cisco Vigil",
                     to: [
                     {
-                        //email: "ch4ch4@gmail.com",
-                        email: user.get("phonenumber") + "@txt.att.net",
+                        email: "ch4ch4@gmail.com",
+                        //email: user.get("phonenumber") + "@txt.att.net",
                         name: "Vigil User"
                     }
                     ]
