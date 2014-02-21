@@ -82,14 +82,14 @@ Parse.Cloud.define("Ping", function (request, response) {
                         pingUser.fetch({
                             success: function (fetchedUser) {
                                 Parse.Cloud.useMasterKey();
-                                fetchedUser.save(null, {
+                                fetchedUser.save(fetchedUser, {
                                     success: function (res) {
                                         Parse.Cloud.useMasterKey();
                                         res.set("outOfBounds", true);
-                                        res.save(null, {
+                                        res.save(res, {
                                             success: function (res2) {
                                                 //response.success("false");
-                                                if (debugMode) console.log("outOfBounds updated to true");
+                                                if (debugMode) console.log(res2);
                                             },
                                             error: function (model, error) {
                                                 //response.error(error);
@@ -177,14 +177,14 @@ Parse.Cloud.define("Ping", function (request, response) {
                         pingUser.fetch({
                             success: function (fetchedUser) {
                                 Parse.Cloud.useMasterKey();
-                                fetchedUser.save(null, {
+                                fetchedUser.save(fetchedUser, {
                                     success: function (res) {
                                         Parse.Cloud.useMasterKey();
                                         res.set("outOfBounds", false);
-                                        res.save(null, {
+                                        res.save(res, {
                                             success: function (res2) {
                                                 //response.success("true");
-                                                if (debugMode) console.log("outOfBounds updated to false");
+                                                if (debugMode) console.log(res2);
                                             },
                                             error: function (model, error) {
                                                 //response.error(error);
@@ -414,6 +414,46 @@ Parse.Cloud.define("CheckIfUserOutOfBounds", function (request, response) {
             // error is a Parse.Error with an error code and description.
             if (debugMode) console.log("Error retrieving user's outOfBounds status");
             response.error(error);
+        }
+    });
+});
+
+Parse.Cloud.define("CiscoVoice", function (request, response) {
+    var sr =
+                '<?xml version="1.0" encoding="utf-8"?>' +
+                '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">' +
+                    '<soap:Body>' +
+      '<in0 xmlns="urn:Message" xmlns:ext="urn:MessageExtension">' +
+         '<ext:Recipients>' +
+            '<ext:name>mobile_phone</ext:name>' +
+            '<ext:value>+14156466297</ext:value>' +
+         '</ext:Recipients>' +
+         '<type>RMA_ETA_Notification_SMS</type>' +
+         '<subject>RMA_ETA_Notification_SMS English</subject>' +
+         '<data>RMA_ETA_Notification_SMS English</data>' +
+         '<priority>3</priority>' +
+         '<creationDate>2012-01-06T18:00:00.000Z</creationDate>' +
+         '<lang>en</lang>' +
+         '<actions/>' +
+      '</in0>' +
+   '</soap:Body>' +
+'</soap:Envelope>';
+
+
+
+    Parse.Cloud.httpRequest({
+        method: 'POST',
+        url: 'https://www.ciscocebt.com/PCA/Proxy/services/EventHandling?wsdl',
+        headers: {
+            'Content-Type': 'text/plain'
+        },
+        body: sr,
+        success: function (httpResponse) {
+            console.log(httpResponse.text);
+            response.success();
+        },
+        error: function (httpResponse) {
+            console.error('Request failed with response code ' + httpResponse.status);
         }
     });
 });
