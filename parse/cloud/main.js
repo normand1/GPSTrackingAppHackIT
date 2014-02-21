@@ -288,8 +288,8 @@ function sendSMSAlert(targetUser) {
                     from_name: "Cisco Vigil",
                     to: [
                     {
-                        email: "ch4ch4@gmail.com",
-                        //email: user.get("phonenumber") + "@txt.att.net",
+                        //email: "ch4ch4@gmail.com",
+                        email: user.get("phonenumber") + "@txt.att.net",
                         name: "Vigil User"
                     }
                     ]
