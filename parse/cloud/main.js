@@ -282,8 +282,8 @@ function sendSMSAlert(targetUser) {
         success: function (user) {
             Mandrill.sendEmail({
                 message: {
-                    text: "User has left allowed location",
-                    subject: "Proximity Alert",
+                    text: user.get("username") + " has left the allowed location",
+                    subject: "Proximity Alert For " + user.get("username"),
                     from_email: "ch4ch4@gmail.com",
                     from_name: "Cisco Vigil",
                     to: [
