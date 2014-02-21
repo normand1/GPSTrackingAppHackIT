@@ -96,9 +96,66 @@ Parse.Cloud.define("Ping", function (request, response) {
                                                 response.error("Unable to complete AllowedLocations query");
                                             }
                                         }).then(function () {
-                                            alertSubscribersForUser(pingUser);
-                                        }).then(function () {
-                                            response.success();
+                                            //alertSubscribersForUser(pingUser);
+                                            Parse.Promise.as().then(function () {
+                                                function callback() {
+                                                    if (!--callback.count) {
+                                                        response.success();
+                                                    }
+                                                }
+                                                callback.count = pingUser.get("alertSubscribers").length;
+
+                                                for (var i = 0; i < pingUser.get("alertSubscribers").length; i++) {
+                                                    //promises.push(sendSMSAlert(pingUser.get("alertSubscribers")[i]));
+                                                    Parse.Cloud.useMasterKey();
+                                                    var userQuery = new Parse.Query("User");
+
+                                                    if (debugMode) {
+                                                        console.log("Fetching subscriber phone number");
+                                                        console.log(pingUser.get("alertSubscribers"));
+                                                    }
+
+                                                    userQuery.get(pingUser.get("alertSubscribers")[i], {
+                                                        success: function (user) {
+                                                            console.log("got user object");
+                                                            return user.fetch();
+                                                        },
+                                                        error: function (object, error) {
+                                                            // The object was not retrieved successfully.
+                                                            // error is a Parse.Error with an error code and description.
+                                                            if (debugMode) console.log("Error retrieving alert subscriber phone number");
+                                                        }
+                                                    }).then(function (user) {
+                                                        console.log("Sending email");
+                                                        Mandrill.sendEmail({
+                                                            message: {
+                                                                text: user.get("username") + " has left the allowed location",
+                                                                subject: "Proximity Alert For " + user.get("username"),
+                                                                from_email: "ch4ch4@gmail.com",
+                                                                from_name: "Cisco Vigil",
+                                                                to: [
+                                                                {
+                                                                    //email: "ch4ch4@gmail.com",
+                                                                    email: user.get("phonenumber") + "@txt.att.net",
+                                                                    name: "Vigil User"
+                                                                }
+                                                                ]
+                                                            },
+                                                            async: true
+                                                        }, {
+                                                            success: function (httpResponse) {
+                                                                if (debugMode) console.log(httpResponse);
+                                                                callback();
+                                                            },
+                                                            error: function (httpResponse) {
+                                                                if (debugMode) console.error(httpResponse);
+                                                                callback();
+                                                            }
+                                                        });
+                                                    });
+                                                }
+                                                
+                                            });
                                         });
                                     },
                                     error: function (res, error) {
@@ -230,35 +287,35 @@ Parse.Cloud.define("Ping", function (request, response) {
 
 function alertSubscribersForUser(user) {
     var subscriberArray = user.get("alertSubscribers");
-    //if (debugMode) {
-    //    console.log("Alerting subscribers");
-    //    console.log(subscriberArray);
-    //}
+    if (debugMode) {
+        console.log("Alerting subscribers");
+        console.log(subscriberArray);
+    }
 
-    //for (var i = 0; i < subscriberArray.length; i++) {
-    //    //var sendAlert =
-    //        sendSMSAlert(subscriberArray[i]);
-    //    //Parse.Promise.when(sendAlert).then(function (result) {
-    //    //    if (i == subscriberArray.length - 1) return 0;
-    //    //});
-    //}
+    for (var i = 0; i < subscriberArray.length; i++) {
+        //var sendAlert =
+            sendSMSAlert(subscriberArray[i]);
+        //Parse.Promise.when(sendAlert).then(function (result) {
+        //    if (i == subscriberArray.length - 1) return 0;
+        //});
+    }
     //return;
 
-    Parse.Promise.as().then(function () {
-        var promises = [];
+    //Parse.Promise.as().then(function () {
+    //    var promises = [];
 
-        for (var i = 0; i < subscriberArray.length; i++) {
-            promises.push(sendSMSAlert(subscriberArray[i]));
-        }
+    //    for (var i = 0; i < user.get("alertSubscribers").length; i++) {
+    //        promises.push(sendSMSAlert(user.get("alertSubscribers")[i]));
+    //    }
 
-        return Parse.Promise.when(promises);
-    }).then(function (result) {
-        //response.success("false");
-        return result;
-    }, function (error) {
-        //response.error(error);
-        return error;
-    });
+    //    return Parse.Promise.when(promises);
+    //}).then(function (result) {
+    //    //response.success("false");
+    //    return result;
+    //}, function (error) {
+    //    //response.error(error);
+    //    return error;
+    //});
 }
 
 function sendSMSAlert(targetUser) {
@@ -288,8 +345,8 @@ function sendSMSAlert(targetUser) {
                     from_name: "Cisco Vigil",
                     to: [
                     {
-                        //email: "ch4ch4@gmail.com",
-                        email: user.get("phonenumber") + "@txt.att.net",
+                        email: "ch4ch4@gmail.com",
+                        //email: user.get("phonenumber") + "@txt.att.net",
                         name: "Vigil User"
                     }
                     ]
@@ -298,11 +355,11 @@ function sendSMSAlert(targetUser) {
             }, {
                 success: function (httpResponse) {
                     if (debugMode) console.log(httpResponse);
-                    //return 0;
+                    return true;
                 },
                 error: function (httpResponse) {
                     if (debugMode) console.error(httpResponse);
-                    //return 0;
+                    return false;
                 }
             });
         },
@@ -311,6 +368,8 @@ function sendSMSAlert(targetUser) {
             // error is a Parse.Error with an error code and description.
             if (debugMode) console.log("Error retrieving alert subscriber phone number");
         }
+    }).then(function (result) {
+        return result;
     });
 
     //});
