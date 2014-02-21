@@ -55,12 +55,14 @@ Parse.Cloud.define("Ping", function (request, response) {
                 }
 
                 if (!isInAllowedLocation) {
-                    //sendSMSAlert(pingUser).then(function () {
-                    alertSubscribersForUser(pingUser).then(function () {
-                        response.success(false);
-                    });
+                    var sendAlerts =
+                        alertSubscribersForUser(pingUser);
+                    //Parse.Promise.when(sendAlerts).then(function (result) {
+                    ////alertSubscribersForUser(pingUser);
+                    //    response.success("false");
+                    //});
                 } else {
-                    response.success(true);
+                    response.success("true");
                 }
             },
             error: function (error) {
@@ -74,68 +76,92 @@ Parse.Cloud.define("Ping", function (request, response) {
 
 function alertSubscribersForUser(user) {
     var subscriberArray = user.get("alertSubscribers");
-    for (var i = 0; i < subscriberArray.length; i++) {
-        sendSMSAlert(subscriberArray[i]);
+    if (debugMode) {
+        console.log("Alerting subscribers");
+        console.log(subscriberArray);
     }
+
+    for (var i = 0; i < subscriberArray.length; i++) {
+        //var sendAlert =
+            sendSMSAlert(subscriberArray[i]);
+        //Parse.Promise.when(sendAlert).then(function (result) {
+        //    if (i == subscriberArray.length - 1) return 0;
+        //});
+    }
+    return;
 }
 
 function sendSMSAlert(targetUser) {
     if (debugMode) {
-        console.log("Sending SMS");
+        console.log("Preparing to send SMS to: " + targetUser);
         //return; //remove when ready to test sms
     }
 
     var Mandrill = require('mandrill');
     Mandrill.initialize('AHaK4-FxJJB5CqTMAIddQw');
 
-    Mandrill.sendEmail({
-        message: {
-            text: "User has left allowed location",
-            subject: "Proximity Alert",
-            from_email: "ch4ch4@gmail.com",
-            from_name: "Cisco Vigil",
-            to: [
-            {
-                email: getPhonenumberForUser(targetUser) + "@txt.att.net",
-                name: "Vigil User"
-            }
-            ]
-        },
-        async: true
-    }, {
-        success: function (httpResponse) {
-            if (debugMode) console.log(httpResponse);
-            return;
-        },
-        error: function (httpResponse) {
-            if (debugMode) console.error(httpResponse);
-            return;
-        }
-    });
-}
+    //var number = getPhonenumberForUser(targetUser);
 
-function getPhonenumberForUser(userId) {
+    //Parse.Promise.when(number).then(function (result) {
     Parse.Cloud.useMasterKey();
+    var userQuery = new Parse.Query("User");
 
-    var UserObject = Parse.Object.extend("User");
-    var userObjectQuery = new Parse.Query(UserObject);
-    userObjectQuery.get(userId, {
-        success: function (userObject) {
-            // The object was retrieved successfully.
-            var number = userObject.get("phonenumber");
-            if (debugMode) console.log("Sending SMS to number: " + number);
+    if (debugMode) console.log("Fetching subscriber phone number");
 
-            return number;
+    userQuery.get(targetUser, {
+        success: function (user) {
+            Mandrill.sendEmail({
+                message: {
+                    text: "User has left allowed location",
+                    subject: "Proximity Alert",
+                    from_email: "ch4ch4@gmail.com",
+                    from_name: "Cisco Vigil",
+                    to: [
+                    {
+                        email: debugMode ? "ch4ch4@gmail.com" : user.get("phonenumber") + "@txt.att.net",
+                        name: "Vigil User"
+                    }
+                    ]
+                },
+                async: true
+            }, {
+                success: function (httpResponse) {
+                    if (debugMode) console.log(httpResponse);
+                    //return 0;
+                },
+                error: function (httpResponse) {
+                    if (debugMode) console.error(httpResponse);
+                    //return 0;
+                }
+            });
         },
         error: function (object, error) {
             // The object was not retrieved successfully.
             // error is a Parse.Error with an error code and description.
             if (debugMode) console.log("Error retrieving alert subscriber phone number");
-            
-            return;
         }
     });
 
+    //});
+}
+
+function getPhonenumberForUser(userId) {
+    Parse.Cloud.useMasterKey();
+    var user = new Parse.User;
+    user.id = userId;
+
+    if (debugMode) console.log("Fetching subscriber phone number");
+
+    user.fetch({
+        success: function(user){
+            return user.get("phonenumber");
+        },
+        error: function (object, error) {
+            // The object was not retrieved successfully.
+            // error is a Parse.Error with an error code and description.
+            if (debugMode) console.log("Error retrieving alert subscriber phone number");
+        }
+    });
 }
 
 Parse.Cloud.define("Panic", function (request, response) {
